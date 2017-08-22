@@ -166,7 +166,8 @@ void ll__next(struct ll_linked_list *list, struct data *data) {
                 *data = (struct data) { LL_DATA_TYPE_NONE, {0}};
                 return;
         }
-        *data = list->flow->data;
+        if (data != NULL)
+                *data = list->flow->data;
         list->flow = list->flow->next;
 }
 
@@ -175,7 +176,8 @@ void ll__prev(struct ll_linked_list *list, struct data *data) {
                 *data = (struct data) { LL_DATA_TYPE_NONE, {0}};
                 return;
         }
-        *data = list->flow->prev->data;
+        if (data != NULL)
+                *data = list->flow->prev->data;
         list->flow = list->flow->prev;
 }
 
