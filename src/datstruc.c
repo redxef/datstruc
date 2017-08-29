@@ -92,6 +92,10 @@ void ll__delete(struct ll_linked_list **list) {
         *list = NULL;
 }
 
+void ll__rewind(struct ll_linked_list *list) {
+        list->flow = list->first;
+}
+
 void ll__append(struct ll_linked_list *list, struct data data) {
         list->last->data = data;
         list->last->next = lln__new();
@@ -181,6 +185,50 @@ void ll__prev(struct ll_linked_list *list, struct data *data) {
         list->flow = list->flow->prev;
 }
 
+#define ll__to_N_array(name, type, use_union_field)                     \
+void ll__to_##name##_array(struct ll_linked_list *list, type *arr) {    \
+        size_t i = 0;                                                   \
+        struct data dat;                                                \
+        struct ll_node *old_flow = list->flow;                          \
+        list->flow = list->first;                                       \
+        while (ll__has_next(list)) {                                    \
+                ll__next(list, &dat);                                   \
+                arr[i++] = (type) dat.use_union_field;                  \
+        }                                                               \
+        list->flow = old_flow;                                          \
+}
+
+ll__to_N_array(i8, int8_t, _int);
+ll__to_N_array(i16, int16_t, _int);
+ll__to_N_array(i32, int32_t, _int);
+ll__to_N_array(i64, int64_t, _int);
+ll__to_N_array(u8, uint8_t, _uint);
+ll__to_N_array(u16, uint16_t, _uint);
+ll__to_N_array(u32, uint32_t, _uint);
+ll__to_N_array(u64, uint64_t, _uint);
+ll__to_N_array(void, void *, _ptr);
+
+#define ll__from_N_array(name, type_, use_union_field, data_type_macro)                  \
+void ll__from_##name##_array(struct ll_linked_list *list, type_ *arr, size_t len) {      \
+        size_t i;                                                                       \
+        struct data dat;                                                                \
+        dat.type = data_type_macro;                                                     \
+        for (i = 0; i < len; i++) {                                                     \
+                dat.use_union_field = arr[i];                                           \
+                ll__append(list, dat);                                                  \
+        }                                                                               \
+}
+
+ll__from_N_array(i8, int8_t, _int, LL_DATA_TYPE_I8);
+ll__from_N_array(i16, int16_t, _int, LL_DATA_TYPE_I16);
+ll__from_N_array(i32, int32_t, _int, LL_DATA_TYPE_I32);
+ll__from_N_array(i64, int64_t, _int, LL_DATA_TYPE_I64);
+ll__from_N_array(u8, uint8_t, _uint, LL_DATA_TYPE_U8);
+ll__from_N_array(u16, uint16_t, _uint, LL_DATA_TYPE_U16);
+ll__from_N_array(u32, uint32_t, _uint, LL_DATA_TYPE_U32);
+ll__from_N_array(u64, uint64_t, _uint, LL_DATA_TYPE_U64);
+ll__from_N_array(void, void *, _ptr, LL_DATA_TYPE_VOID);
+
 void ll__print(struct ll_linked_list *list) {
         struct ll_node *flow = list->first;
 
@@ -189,7 +237,24 @@ void ll__print(struct ll_linked_list *list) {
                 printf("%llu, ", flow->data._uint);
                 flow = flow->next;
         }
-        printf("\b\b}\n");
+        printf("\b\b}");
+}
+
+void ll__sprint(char *str, struct ll_linked_list *list) {
+        struct ll_node *flow = list->first;
+        
+        char *end = str;
+
+        sprintf(end, "{");
+        end = strchr(end, '\0');
+        while (flow->next != NULL) {
+                sprintf(end, "%llu, ", flow->data._uint);
+                end = strchr(end, '\0');
+                flow = flow->next;
+        }
+        end[-2] = '}';
+        end[-1] = '\0';
+        end = strchr(end, '\0');
 }
 
 struct hm_hash_map *hm__new(struct hm_hash_map *dest, uint64_t size) {

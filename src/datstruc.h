@@ -205,12 +205,60 @@ void ll__next(struct ll_linked_list *list, struct data *data);
 void ll__prev(struct ll_linked_list *list, struct data *data);
 
 /**
+ * The ll__to_X_array family of functions turn the list into an
+ * array.
+ *
+ * @param       list    the list to convert
+ * @param       arr     a pointer to a preallocated array
+ */
+#define ll__to_N_array_header(name, type)              \
+void ll__to_##name##_array(struct ll_linked_list *list, type *arr)
+
+ll__to_N_array_header(i8, int8_t);
+ll__to_N_array_header(i16, int16_t);
+ll__to_N_array_header(i32, int32_t);
+ll__to_N_array_header(i64, int64_t);
+ll__to_N_array_header(u8, uint8_t);
+ll__to_N_array_header(u16, uint16_t);
+ll__to_N_array_header(u32, uint32_t);
+ll__to_N_array_header(u64, uint64_t);
+ll__to_N_array_header(void, void *);
+
+/**
+ * The ll__from_X_array family of functions fill a list with the
+ * values specified by the given array.
+ *
+ * @param       list    the list to be filled
+ * @param       arr     the array from which the values should be taken
+ * @param       len     the length of the array
+ */
+#define ll__from_N_array_header(name, type)                  \
+void ll__from_##name##_array(struct ll_linked_list *list, type *arr, size_t len);
+
+ll__from_N_array_header(i8, int8_t);
+ll__from_N_array_header(i16, int16_t);
+ll__from_N_array_header(i32, int32_t);
+ll__from_N_array_header(i64, int64_t);
+ll__from_N_array_header(u8, uint8_t);
+ll__from_N_array_header(u16, uint16_t);
+ll__from_N_array_header(u32, uint32_t);
+ll__from_N_array_header(u64, uint64_t);
+ll__from_N_array_header(void, void *);
+
+/**
  * Prints out the list, assuming that the data is a character.
  *
  * @param       list    the list to be printed
  */
 void ll__print(struct ll_linked_list *list);
 
+/**
+ * Prints the list into str, assuming that the data is a character.
+ *
+ * @param       str     the destination buffer
+ * @param       list    the list to be printed
+ */
+void ll__sprint(char *str, struct ll_linked_list *list);
 
 /**
  * Creates a new hash map with size buckets. Collisions are resolved with a
