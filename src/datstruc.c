@@ -48,7 +48,7 @@ void lln__delete(struct ll_node *first) {
         }
 }
 
-struct ll_linked_list *ll__new(struct ll_linked_list *dest) {
+struct ll_linked_list *ll__new(struct ll_linked_list *dest, uint64_t type) {
         if (dest == NULL) {
                 dest = malloc(sizeof(struct ll_linked_list));
                 if (dest == NULL) {
@@ -67,6 +67,8 @@ struct ll_linked_list *ll__new(struct ll_linked_list *dest) {
         dest->last = dest->first;
         dest->flow = dest->first;
         dest->length = 0;
+
+        dest->type = type;
 
         return dest;
 }
@@ -167,7 +169,7 @@ uint8_t ll__has_prev(struct ll_linked_list *list) {
 
 void ll__next(struct ll_linked_list *list, struct data *data) {
         if (!ll__has_next(list)) {
-                *data = (struct data) { LL_DATA_TYPE_NONE, {0}};
+                *data = (struct data) {{0}};
                 return;
         }
         if (data != NULL)
@@ -177,7 +179,7 @@ void ll__next(struct ll_linked_list *list, struct data *data) {
 
 void ll__prev(struct ll_linked_list *list, struct data *data) {
         if (!ll__has_prev(list)) {
-                *data = (struct data) { LL_DATA_TYPE_NONE, {0}};
+                *data = (struct data) {{0}};
                 return;
         }
         if (data != NULL)
@@ -198,36 +200,36 @@ void ll__to_##name##_array(struct ll_linked_list *list, type *arr) {    \
         list->flow = old_flow;                                          \
 }
 
-ll__to_N_array(i8, int8_t, _int);
-ll__to_N_array(i16, int16_t, _int);
-ll__to_N_array(i32, int32_t, _int);
-ll__to_N_array(i64, int64_t, _int);
-ll__to_N_array(u8, uint8_t, _uint);
-ll__to_N_array(u16, uint16_t, _uint);
-ll__to_N_array(u32, uint32_t, _uint);
-ll__to_N_array(u64, uint64_t, _uint);
-ll__to_N_array(void, void *, _ptr);
+ll__to_N_array(i8, int8_t, _int)
+ll__to_N_array(i16, int16_t, _int)
+ll__to_N_array(i32, int32_t, _int)
+ll__to_N_array(i64, int64_t, _int)
+ll__to_N_array(u8, uint8_t, _uint)
+ll__to_N_array(u16, uint16_t, _uint)
+ll__to_N_array(u32, uint32_t, _uint)
+ll__to_N_array(u64, uint64_t, _uint)
+ll__to_N_array(void, void *, _ptr)
 
-#define ll__from_N_array(name, type_, use_union_field, data_type_macro)                  \
-void ll__from_##name##_array(struct ll_linked_list *list, type_ *arr, size_t len) {      \
+#define ll__from_N_array(name, type_, use_union_field, data_type_macro)                 \
+void ll__from_##name##_array(struct ll_linked_list *list, type_ *arr, size_t len) {     \
         size_t i;                                                                       \
         struct data dat;                                                                \
-        dat.type = data_type_macro;                                                     \
+        list->type = data_type_macro;                                                   \
         for (i = 0; i < len; i++) {                                                     \
                 dat.use_union_field = arr[i];                                           \
                 ll__append(list, dat);                                                  \
         }                                                                               \
 }
 
-ll__from_N_array(i8, int8_t, _int, LL_DATA_TYPE_I8);
-ll__from_N_array(i16, int16_t, _int, LL_DATA_TYPE_I16);
-ll__from_N_array(i32, int32_t, _int, LL_DATA_TYPE_I32);
-ll__from_N_array(i64, int64_t, _int, LL_DATA_TYPE_I64);
-ll__from_N_array(u8, uint8_t, _uint, LL_DATA_TYPE_U8);
-ll__from_N_array(u16, uint16_t, _uint, LL_DATA_TYPE_U16);
-ll__from_N_array(u32, uint32_t, _uint, LL_DATA_TYPE_U32);
-ll__from_N_array(u64, uint64_t, _uint, LL_DATA_TYPE_U64);
-ll__from_N_array(void, void *, _ptr, LL_DATA_TYPE_VOID);
+ll__from_N_array(i8, int8_t, _int, LL_DATA_TYPE_I8)
+ll__from_N_array(i16, int16_t, _int, LL_DATA_TYPE_I16)
+ll__from_N_array(i32, int32_t, _int, LL_DATA_TYPE_I32)
+ll__from_N_array(i64, int64_t, _int, LL_DATA_TYPE_I64)
+ll__from_N_array(u8, uint8_t, _uint, LL_DATA_TYPE_U8)
+ll__from_N_array(u16, uint16_t, _uint, LL_DATA_TYPE_U16)
+ll__from_N_array(u32, uint32_t, _uint, LL_DATA_TYPE_U32)
+ll__from_N_array(u64, uint64_t, _uint, LL_DATA_TYPE_U64)
+ll__from_N_array(void, void *, _ptr, LL_DATA_TYPE_VOID)
 
 void ll__print(struct ll_linked_list *list) {
         struct ll_node *flow = list->first;
@@ -269,7 +271,7 @@ struct hm_hash_map *hm__new(struct hm_hash_map *dest, uint64_t size) {
         dest->buckets = malloc(size * sizeof(struct ll_linked_list));
 
         for (i = 0; i < size; i++) {
-                ll__new(&dest->buckets[i]);
+                ll__new(&dest->buckets[i], LL_DATA_HM_ENTRY);
         }
         dest->hash = NULL;
         dest->size = size;
@@ -301,7 +303,6 @@ void hm__put(struct hm_hash_map *hm, struct hm_entry entry) {
         }
 
         memcpy(ecpy, &entry, sizeof(struct hm_entry));
-        dat.type = LL_DATA_HM_ENTRY;
         dat._ptr = ecpy;
 
         hash = hm->hash(entry.key) % hm->size;
@@ -323,7 +324,7 @@ struct hm_entry hm__get(struct hm_hash_map *hm, const char *key) {
                         return *entry;
                 }
         }
-        return (struct hm_entry) {"", {LL_DATA_TYPE_NONE, {0}}};
+        return (struct hm_entry) {"", {{0}}};
 }
 
 void hm__delete(struct hm_hash_map *hm, const char *key) {

@@ -1,5 +1,5 @@
 CC := clang
-CFLAGS := -g -Wall
+CFLAGS := -g -Wall -Wpedantic -Werror -Wextra
 LFLAGS := -shared $(CFLAGS)
 
 SRC_D := src

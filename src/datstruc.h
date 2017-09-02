@@ -42,7 +42,6 @@
 
 /* basic generic data type */
 struct data {
-        uint64_t type;
         union {
                 int64_t  _int;
                 uint64_t _uint;
@@ -65,9 +64,11 @@ struct ll_linked_list {
         struct ll_node *first;
         struct ll_node *last;
         struct ll_node *flow;
+        uint64_t type;
         size_t length;
 };
 
+/* entry of the hash map */
 struct hm_entry {
         char key[HM_ENTRY_KEY_LENGTH];
         struct data value;
@@ -96,7 +97,7 @@ struct hm_hash_map {
  * @param       dest    the destination of the linked list
  * @returns             the pointer to the linked list struct
  */
-struct ll_linked_list *ll__new(struct ll_linked_list *dest);
+struct ll_linked_list *ll__new(struct ll_linked_list *dest, uint64_t type);
 
 /**
  * Clears the linked list of all items.
@@ -233,7 +234,7 @@ ll__to_N_array_header(void, void *);
  * @param       len     the length of the array
  */
 #define ll__from_N_array_header(name, type)                  \
-void ll__from_##name##_array(struct ll_linked_list *list, type *arr, size_t len);
+void ll__from_##name##_array(struct ll_linked_list *list, type *arr, size_t len)
 
 ll__from_N_array_header(i8, int8_t);
 ll__from_N_array_header(i16, int16_t);
