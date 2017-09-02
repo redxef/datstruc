@@ -187,19 +187,6 @@ void ll__prev(struct ll_linked_list *list, struct data *data) {
         list->flow = list->flow->prev;
 }
 
-#define ll__to_N_array(name, type, use_union_field)                     \
-void ll__to_##name##_array(struct ll_linked_list *list, type *arr) {    \
-        size_t i = 0;                                                   \
-        struct data dat;                                                \
-        struct ll_node *old_flow = list->flow;                          \
-        list->flow = list->first;                                       \
-        while (ll__has_next(list)) {                                    \
-                ll__next(list, &dat);                                   \
-                arr[i++] = (type) dat.use_union_field;                  \
-        }                                                               \
-        list->flow = old_flow;                                          \
-}
-
 ll__to_N_array(i8, int8_t, _int)
 ll__to_N_array(i16, int16_t, _int)
 ll__to_N_array(i32, int32_t, _int)
@@ -209,17 +196,6 @@ ll__to_N_array(u16, uint16_t, _uint)
 ll__to_N_array(u32, uint32_t, _uint)
 ll__to_N_array(u64, uint64_t, _uint)
 ll__to_N_array(void, void *, _ptr)
-
-#define ll__from_N_array(name, type_, use_union_field, data_type_macro)                 \
-void ll__from_##name##_array(struct ll_linked_list *list, type_ *arr, size_t len) {     \
-        size_t i;                                                                       \
-        struct data dat;                                                                \
-        list->type = data_type_macro;                                                   \
-        for (i = 0; i < len; i++) {                                                     \
-                dat.use_union_field = arr[i];                                           \
-                ll__append(list, dat);                                                  \
-        }                                                                               \
-}
 
 ll__from_N_array(i8, int8_t, _int, LL_DATA_TYPE_I8)
 ll__from_N_array(i16, int16_t, _int, LL_DATA_TYPE_I16)

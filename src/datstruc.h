@@ -215,6 +215,19 @@ void ll__prev(struct ll_linked_list *list, struct data *data);
 #define ll__to_N_array_header(name, type)              \
 void ll__to_##name##_array(struct ll_linked_list *list, type *arr)
 
+#define ll__to_N_array(name, type, use_union_field)                     \
+void ll__to_##name##_array(struct ll_linked_list *list, type *arr) {    \
+        size_t i = 0;                                                   \
+        struct data dat;                                                \
+        struct ll_node *old_flow = list->flow;                          \
+        list->flow = list->first;                                       \
+        while (ll__has_next(list)) {                                    \
+                ll__next(list, &dat);                                   \
+                arr[i++] = (type) dat.use_union_field;                  \
+        }                                                               \
+        list->flow = old_flow;                                          \
+}
+
 ll__to_N_array_header(i8, int8_t);
 ll__to_N_array_header(i16, int16_t);
 ll__to_N_array_header(i32, int32_t);
@@ -235,6 +248,17 @@ ll__to_N_array_header(void, void *);
  */
 #define ll__from_N_array_header(name, type)                  \
 void ll__from_##name##_array(struct ll_linked_list *list, type *arr, size_t len)
+
+#define ll__from_N_array(name, type_, use_union_field, data_type_macro)                 \
+void ll__from_##name##_array(struct ll_linked_list *list, type_ *arr, size_t len) {     \
+        size_t i;                                                                       \
+        struct data dat;                                                                \
+        list->type = data_type_macro;                                                   \
+        for (i = 0; i < len; i++) {                                                     \
+                dat.use_union_field = arr[i];                                           \
+                ll__append(list, dat);                                                  \
+        }                                                                               \
+}
 
 ll__from_N_array_header(i8, int8_t);
 ll__from_N_array_header(i16, int16_t);
