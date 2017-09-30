@@ -2,8 +2,8 @@
  * @author      redxef
  * @file        datstruc.c
  * @version     0.0.0-r0
- * @since       
- * 
+ * @since
+ *
  * @brief       A brief documentation about the file.
  *
  * A detailed documentation.
@@ -15,20 +15,20 @@
 
 
 /* C O D E                                                                    */
-struct ll_node *lln__new(void) {
-        struct ll_node *res = malloc(sizeof(struct ll_node));
+struct ds_node *lln__new(void) {
+        struct ds_node *res = malloc(sizeof(struct ds_node));
         if (res == NULL) {
                 errno = ENOMEM;
                 return NULL;
         }
         res->next = NULL;
         res->prev = NULL;
-        memset(&res->data, 0, sizeof(struct data));
+        memset(&res->data, 0, sizeof(struct ds_data));
         return res;
 }
 
-struct data lln__remove_obj(struct ll_node *rm) {
-        struct data ret = rm->data;
+struct ds_data lln__remove_obj(struct ds_node *rm) {
+        struct ds_data ret = rm->data;
         if (rm->prev != NULL) {
                 rm->prev->next = rm->next;
         }
@@ -39,8 +39,8 @@ struct data lln__remove_obj(struct ll_node *rm) {
         return ret;
 }
 
-void lln__delete(struct ll_node *first) {
-        struct ll_node *fre;
+void lln__delete(struct ds_node *first) {
+        struct ds_node *fre;
         while (first != NULL) {
                 fre = first;
                 first = first->next;
@@ -48,9 +48,9 @@ void lln__delete(struct ll_node *first) {
         }
 }
 
-struct ll_linked_list *ll__new(struct ll_linked_list *dest, uint64_t type) {
+struct ds_linked_list *ll__new(struct ds_linked_list *dest, uint64_t type) {
         if (dest == NULL) {
-                dest = malloc(sizeof(struct ll_linked_list));
+                dest = malloc(sizeof(struct ds_linked_list));
                 if (dest == NULL) {
                         errno = ENOMEM;
                         return NULL;
@@ -73,7 +73,11 @@ struct ll_linked_list *ll__new(struct ll_linked_list *dest, uint64_t type) {
         return dest;
 }
 
-void ll__clear(struct ll_linked_list *list) {
+size_t ll__length(struct ds_linked_list *list) {
+        return list->length;
+}
+
+void ll__clear(struct ds_linked_list *list) {
         lln__delete(list->first);
         list->first = lln__new();
         if (list->first == NULL) {
@@ -88,17 +92,17 @@ void ll__clear(struct ll_linked_list *list) {
         list->length = 0;
 }
 
-void ll__delete(struct ll_linked_list **list) {
+void ll__delete(struct ds_linked_list **list) {
         lln__delete((*list)->first);
         free(*list);
         *list = NULL;
 }
 
-void ll__rewind(struct ll_linked_list *list) {
+void ll__rewind(struct ds_linked_list *list) {
         list->flow = list->first;
 }
 
-void ll__append(struct ll_linked_list *list, struct data data) {
+void ll__append(struct ds_linked_list *list, struct ds_data data) {
         list->last->data = data;
         list->last->next = lln__new();
         list->last->next->prev = list->last;
@@ -106,8 +110,8 @@ void ll__append(struct ll_linked_list *list, struct data data) {
         list->length += 1;
 }
 
-void ll__insert(struct ll_linked_list *list, struct data data) {
-        struct ll_node *nd = lln__new();
+void ll__insert(struct ds_linked_list *list, struct ds_data data) {
+        struct ds_node *nd = lln__new();
         if (nd == NULL) {
                 errno = ENOMEM;
                 return;
@@ -120,9 +124,9 @@ void ll__insert(struct ll_linked_list *list, struct data data) {
         list->length += 1;
 }
 
-void ll__insert_at(struct ll_linked_list *list, struct data data, size_t at) {
+void ll__insert_at(struct ds_linked_list *list, struct ds_data data, size_t at) {
         size_t i;
-        struct ll_node *old_flow = list->flow;
+        struct ds_node *old_flow = list->flow;
         list->flow = list->first;
 
         if (at >= list->length) return;
@@ -133,22 +137,40 @@ void ll__insert_at(struct ll_linked_list *list, struct data data, size_t at) {
         list->flow = old_flow;
 }
 
-void ll__remove(struct ll_linked_list *list) {
-        struct ll_node *new_flow = list->flow->next;
-        /* we don't need to handle the last item, since it will never be accessed by the user */
-        uint8_t first = 0;
+void ll__get_first(struct ds_linked_list *list, struct ds_data *data) {
+        if (list->first->next == NULL) {
+                *data = (struct ds_data) {{0}};
+                return;
+        }
+        *data = list->first->data;
+}
+
+void ll__get_last(struct ds_linked_list *list, struct ds_data *data) {
+        if (list->last->prev == NULL) {
+                *data = (struct ds_data) {{0}};
+                return;
+        }
+        *data = list->last->prev->data;
+}
+
+void ll__remove(struct ds_linked_list *list) {
+        uint8_t pos = 0;
         if (list->flow == list->first)
-                first = 1;
+                pos = 1;
+        else if (list->flow == list->last)
+                pos = 2;
         lln__remove_obj(list->flow);
-        if (first)
-                list->first = new_flow;
-        list->flow = new_flow;
+        if (pos == 1)
+                list->first = list->flow->next;
+        else if (pos == 2)
+                list->last = list->flow->prev;
+        list->flow = list->flow->next;
         list->length -= 1;
 }
 
-void ll__remove_at(struct ll_linked_list *list, size_t at) {
+void ll__remove_at(struct ds_linked_list *list, size_t at) {
         size_t i;
-        struct ll_node *old_flow = list->flow;
+        struct ds_node *old_flow = list->flow;
         list->flow = list->first;
 
         if (at >= list->length) return;
@@ -159,17 +181,17 @@ void ll__remove_at(struct ll_linked_list *list, size_t at) {
         list->flow = old_flow;
 }
 
-uint8_t ll__has_next(struct ll_linked_list *list) {
+uint8_t ll__has_next(struct ds_linked_list *list) {
         return (list->flow->next != NULL);
 }
 
-uint8_t ll__has_prev(struct ll_linked_list *list) {
+uint8_t ll__has_prev(struct ds_linked_list *list) {
         return (list->flow->prev != NULL);
 }
 
-void ll__next(struct ll_linked_list *list, struct data *data) {
+void ll__next(struct ds_linked_list *list, struct ds_data *data) {
         if (!ll__has_next(list)) {
-                *data = (struct data) {{0}};
+                *data = (struct ds_data) {{0}};
                 return;
         }
         if (data != NULL)
@@ -177,9 +199,9 @@ void ll__next(struct ll_linked_list *list, struct data *data) {
         list->flow = list->flow->next;
 }
 
-void ll__prev(struct ll_linked_list *list, struct data *data) {
+void ll__prev(struct ds_linked_list *list, struct ds_data *data) {
         if (!ll__has_prev(list)) {
-                *data = (struct data) {{0}};
+                *data = (struct ds_data) {{0}};
                 return;
         }
         if (data != NULL)
@@ -207,8 +229,8 @@ ll__from_N_array(u32, uint32_t, _uint, LL_DATA_TYPE_U32)
 ll__from_N_array(u64, uint64_t, _uint, LL_DATA_TYPE_U64)
 ll__from_N_array(void, void *, _ptr, LL_DATA_TYPE_VOID)
 
-void ll__print(struct ll_linked_list *list) {
-        struct ll_node *flow = list->first;
+void ll__print(struct ds_linked_list *list) {
+        struct ds_node *flow = list->first;
 
         printf("{");
         while (flow->next != NULL) {
@@ -218,9 +240,9 @@ void ll__print(struct ll_linked_list *list) {
         printf("\b\b}");
 }
 
-void ll__sprint(char *str, struct ll_linked_list *list) {
-        struct ll_node *flow = list->first;
-        
+void ll__sprint(char *str, struct ds_linked_list *list) {
+        struct ds_node *flow = list->first;
+
         char *end = str;
 
         sprintf(end, "{");
@@ -235,16 +257,16 @@ void ll__sprint(char *str, struct ll_linked_list *list) {
         end = strchr(end, '\0');
 }
 
-struct hm_hash_map *hm__new(struct hm_hash_map *dest, uint64_t size) {
+struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size) {
         uint64_t i;
         if (dest == NULL) {
-                dest = malloc(sizeof(struct hm_hash_map));
+                dest = malloc(sizeof(struct ds_hash_map));
                 if (dest == NULL) {
                         errno = ENOMEM;
                         return NULL;
                 }
         }
-        dest->buckets = malloc(size * sizeof(struct ll_linked_list));
+        dest->buckets = malloc(size * sizeof(struct ds_linked_list));
 
         for (i = 0; i < size; i++) {
                 ll__new(&dest->buckets[i], LL_DATA_HM_ENTRY);
@@ -267,18 +289,18 @@ uint64_t hm__default_hash(const char *key) {
         return hash;
 }
 
-void hm__put(struct hm_hash_map *hm, struct hm_entry entry) {
-        struct hm_entry *ecpy;
-        struct data dat;
+void hm__put(struct ds_hash_map *hm, struct ds_hm_entry entry) {
+        struct ds_hm_entry *ecpy;
+        struct ds_data dat;
         uint64_t hash;
 
-        ecpy = malloc(sizeof(struct hm_entry));
+        ecpy = malloc(sizeof(struct ds_hm_entry));
         if (ecpy == NULL) {
                 errno = ENOMEM;
                 return;
         }
 
-        memcpy(ecpy, &entry, sizeof(struct hm_entry));
+        memcpy(ecpy, &entry, sizeof(struct ds_hm_entry));
         dat._ptr = ecpy;
 
         hash = hm->hash(entry.key) % hm->size;
@@ -286,11 +308,11 @@ void hm__put(struct hm_hash_map *hm, struct hm_entry entry) {
         ll__append(&(hm->buckets[hash]), dat);
 }
 
-struct hm_entry hm__get(struct hm_hash_map *hm, const char *key) {
+struct ds_hm_entry hm__get(struct ds_hash_map *hm, const char *key) {
         uint64_t hash = hm->hash(key) % hm->size;
-        struct data dat;
-        struct hm_entry *entry;
-        struct ll_linked_list ll = hm->buckets[hash];
+        struct ds_data dat;
+        struct ds_hm_entry *entry;
+        struct ds_linked_list ll = hm->buckets[hash];
         ll.flow = ll.first;
 
         while (ll__has_next(&ll)) {
@@ -300,14 +322,14 @@ struct hm_entry hm__get(struct hm_hash_map *hm, const char *key) {
                         return *entry;
                 }
         }
-        return (struct hm_entry) {"", {{0}}};
+        return (struct ds_hm_entry) {"", {{0}}};
 }
 
-void hm__delete(struct hm_hash_map *hm, const char *key) {
+void hm__delete(struct ds_hash_map *hm, const char *key) {
         uint64_t hash;
-        struct data dat;
-        struct hm_entry *entry;
-        struct ll_linked_list ll;
+        struct ds_data dat;
+        struct ds_hm_entry *entry;
+        struct ds_linked_list ll;
 
         hash = hm->hash(key) % hm->size;
         ll = hm->buckets[hash];

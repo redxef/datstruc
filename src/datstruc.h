@@ -2,8 +2,8 @@
  * @author      redxef
  * @file        datstruc.h
  * @version     0.0.0-r0
- * @since       
- * 
+ * @since
+ *
  * @brief       A brief documentation about the file.
  *
  * A detailed documentation.
@@ -41,7 +41,7 @@
 /* S T R U C T S                                                              */
 
 /* basic generic data type */
-struct data {
+struct ds_data {
         union {
                 int64_t  _int;
                 uint64_t _uint;
@@ -51,34 +51,34 @@ struct data {
 };
 
 /* node of the linked list */
-struct ll_node {
-        struct ll_node *prev;
-        struct ll_node *next;
-        struct data data;
+struct ds_node {
+        struct ds_node *prev;
+        struct ds_node *next;
+        struct ds_data data;
 };
 
 /**
  * Doubly linked list implemented to behave as the java implementation.
  */
-struct ll_linked_list {
-        struct ll_node *first;
-        struct ll_node *last;
-        struct ll_node *flow;
+struct ds_linked_list {
+        struct ds_node *first;
+        struct ds_node *last;
+        struct ds_node *flow;
         uint64_t type;
         size_t length;
 };
 
 /* entry of the hash map */
-struct hm_entry {
+struct ds_hm_entry {
         char key[HM_ENTRY_KEY_LENGTH];
-        struct data value;
+        struct ds_data value;
 };
 
 /**
  * HashMap with Strings as keys
  */
-struct hm_hash_map {
-        struct ll_linked_list *buckets;
+struct ds_hash_map {
+        struct ds_linked_list *buckets;
         uint64_t (*hash)(const char *key);
         uint64_t size;
 };
@@ -93,19 +93,27 @@ struct hm_hash_map {
  * If dest is NULL, then a new linked list will be allocated on the heap,
  * otherwise the specified memory location will be used, assuming, that there is
  * only uninitialized data.
- * 
+ *
  * @param       dest    the destination of the linked list
  * @returns             the pointer to the linked list struct
  */
-struct ll_linked_list *ll__new(struct ll_linked_list *dest, uint64_t type);
+struct ds_linked_list *ll__new(struct ds_linked_list *dest, uint64_t type);
+
+/**
+ * Returns the length of the linked list.
+ *
+ * @param       list    the list from which to get the length
+ * @returns             the length of this list
+ */
+size_t ll__length(struct ds_linked_list *list);
 
 /**
  * Clears the linked list of all items.
- * 
+ *
  * @param       list    the list to be cleared
  * @param       free    should the items be free'd
  */
-void ll__clear(struct ll_linked_list *list);
+void ll__clear(struct ds_linked_list *list);
 
 /**
  * Deletes the whole linked list and sets the pointer to it to NULL.
@@ -120,7 +128,7 @@ void ll__clear(struct ll_linked_list *list);
  * @param       list    the list to be deallocated
  * @param       dealloc should the items be free'd
  */
-void ll__delete(struct ll_linked_list **list);
+void ll__delete(struct ds_linked_list **list);
 
 /**
  * Appends the specified data to the end of the list.
@@ -129,20 +137,20 @@ void ll__delete(struct ll_linked_list **list);
  * @param       data    the data to be appended
  * @param       type    the type of data
  */
-void ll__append(struct ll_linked_list *list, struct data data);
+void ll__append(struct ds_linked_list *list, struct ds_data data);
 
 /**
  * Inserts the specified data into the list at the current position.
  * When iterating over the list with ll__next and ll__prev, an internal pointer
- * iterates over the list, when performing operation such as ll__insert or ll__remove
- * those operations happen at this position.
+ * iterates over the list, when performing operation such as ll__insert or
+ * ll__remove those operations happen at this position.
  * The item specified is inserted immediatly after the current item.
  *
  * @param       list    the list to operate on
  * @param       data    the data to be inserted
  * @param       type    the type of the data
  */
-void ll__insert(struct ll_linked_list *list, struct data data);
+void ll__insert(struct ds_linked_list *list, struct ds_data data);
 
 /**
  * Inserts the specified data into the list at the specified position.
@@ -152,7 +160,23 @@ void ll__insert(struct ll_linked_list *list, struct data data);
  * @param       type    the type of the data
  * @param       at      the position at wich to insert (index)
  */
-void ll__insert_at(struct ll_linked_list *list, struct data data, size_t at);
+void ll__insert_at(struct ds_linked_list *list, struct ds_data data, size_t at);
+
+/**
+ * Returns the first element of this list.
+ *
+ * @param       list    the list to operate on
+ * @param       data    the struct to be filled with the appropriate data.
+ */
+void ll__get_first(struct ds_linked_list *list, struct ds_data *data);
+
+/**
+ * Returns the last element of this list.
+ *
+ * @param       list    the list to operate on
+ * @param       data    the struct to be filled with the appropriate data.
+ */
+void ll__get_last(struct ds_linked_list *list, struct ds_data *data);
 
 /**
  * Removes the currently selected list node and deletes it.
@@ -160,7 +184,7 @@ void ll__insert_at(struct ll_linked_list *list, struct data data, size_t at);
  * @param       list    the list to operate on
  * @param       free    should the data be free'd
  */
-void ll__remove(struct ll_linked_list *list);
+void ll__remove(struct ds_linked_list *list);
 
 /**
  * Removes the list node at the specified position.
@@ -169,7 +193,7 @@ void ll__remove(struct ll_linked_list *list);
  * @param       at      the index of the node to be removed
  * @param       free    should the data be free'd
  */
-void ll__remove_at(struct ll_linked_list *list, size_t at);
+void ll__remove_at(struct ds_linked_list *list, size_t at);
 
 /**
  * Checks if there is another item in the list.
@@ -177,7 +201,7 @@ void ll__remove_at(struct ll_linked_list *list, size_t at);
  * @param       list    the list to operate on
  * @returns             wheter there is another item in the list or not
  */
-uint8_t ll__has_next(struct ll_linked_list *list);
+uint8_t ll__has_next(struct ds_linked_list *list);
 
 /**
  * Checks if there is another item in the list.
@@ -185,7 +209,7 @@ uint8_t ll__has_next(struct ll_linked_list *list);
  * @param       list    the list to operate on
  * @returns             wheter there is another item in the list or not
  */
-uint8_t ll__has_prev(struct ll_linked_list *list);
+uint8_t ll__has_prev(struct ds_linked_list *list);
 
 /**
  * Returns the next data from the list.
@@ -194,7 +218,7 @@ uint8_t ll__has_prev(struct ll_linked_list *list);
  * @param       data    the destination pointer of the data
  * @param       type    the destination pointer of the type
  */
-void ll__next(struct ll_linked_list *list, struct data *data);
+void ll__next(struct ds_linked_list *list, struct ds_data *data);
 
 /**
  * Returns the previous data from the list.
@@ -203,7 +227,7 @@ void ll__next(struct ll_linked_list *list, struct data *data);
  * @param       data    the destination pointer of the data
  * @param       type    the destination pointer of the type
  */
-void ll__prev(struct ll_linked_list *list, struct data *data);
+void ll__prev(struct ds_linked_list *list, struct ds_data *data);
 
 /**
  * The ll__to_X_array family of functions turn the list into an
@@ -212,14 +236,14 @@ void ll__prev(struct ll_linked_list *list, struct data *data);
  * @param       list    the list to convert
  * @param       arr     a pointer to a preallocated array
  */
-#define ll__to_N_array_header(name, type)              \
-void ll__to_##name##_array(struct ll_linked_list *list, type *arr)
+#define ll__to_N_array_header(name, type)                               \
+void ll__to_##name##_array(struct ds_linked_list *list, type *arr)
 
 #define ll__to_N_array(name, type, use_union_field)                     \
-void ll__to_##name##_array(struct ll_linked_list *list, type *arr) {    \
+void ll__to_##name##_array(struct ds_linked_list *list, type *arr) {    \
         size_t i = 0;                                                   \
-        struct data dat;                                                \
-        struct ll_node *old_flow = list->flow;                          \
+        struct ds_data dat;                                             \
+        struct ds_node *old_flow = list->flow;                          \
         list->flow = list->first;                                       \
         while (ll__has_next(list)) {                                    \
                 ll__next(list, &dat);                                   \
@@ -246,18 +270,20 @@ ll__to_N_array_header(void, void *);
  * @param       arr     the array from which the values should be taken
  * @param       len     the length of the array
  */
-#define ll__from_N_array_header(name, type)                  \
-void ll__from_##name##_array(struct ll_linked_list *list, type *arr, size_t len)
+#define ll__from_N_array_header(name, type)                             \
+void ll__from_##name##_array(struct ds_linked_list *list,               \
+        type *arr, size_t len)
 
-#define ll__from_N_array(name, type_, use_union_field, data_type_macro)                 \
-void ll__from_##name##_array(struct ll_linked_list *list, type_ *arr, size_t len) {     \
-        size_t i;                                                                       \
-        struct data dat;                                                                \
-        list->type = data_type_macro;                                                   \
-        for (i = 0; i < len; i++) {                                                     \
-                dat.use_union_field = arr[i];                                           \
-                ll__append(list, dat);                                                  \
-        }                                                                               \
+#define ll__from_N_array(name, type_, use_union_field, data_type_macro) \
+void ll__from_##name##_array(struct ds_linked_list *list, type_ *arr,   \
+        size_t len) {                                                   \
+        size_t i;                                                       \
+        struct ds_data dat;                                             \
+        list->type = data_type_macro;                                   \
+        for (i = 0; i < len; i++) {                                     \
+                dat.use_union_field = arr[i];                           \
+                ll__append(list, dat);                                  \
+        }                                                               \
 }
 
 ll__from_N_array_header(i8, int8_t);
@@ -275,7 +301,7 @@ ll__from_N_array_header(void, void *);
  *
  * @param       list    the list to be printed
  */
-void ll__print(struct ll_linked_list *list);
+void ll__print(struct ds_linked_list *list);
 
 /**
  * Prints the list into str, assuming that the data is a character.
@@ -283,7 +309,7 @@ void ll__print(struct ll_linked_list *list);
  * @param       str     the destination buffer
  * @param       list    the list to be printed
  */
-void ll__sprint(char *str, struct ll_linked_list *list);
+void ll__sprint(char *str, struct ds_linked_list *list);
 
 /**
  * Creates a new hash map with size buckets. Collisions are resolved with a
@@ -293,7 +319,7 @@ void ll__sprint(char *str, struct ll_linked_list *list);
  * @param       size    the target bucket count
  * @returns             the pointer to the resulting hash_map struct
  */
-struct hm_hash_map *hm__new(struct hm_hash_map *dest, uint64_t size);
+struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size);
 
 /**
  * The default hash function of the map.
@@ -310,7 +336,7 @@ uint64_t hm__default_hash(const char *key);
  * @param       hm      the hash map
  * @param       entry   the entry to add to the map
  */
-void hm__put(struct hm_hash_map *hm, struct hm_entry entry);
+void hm__put(struct ds_hash_map *hm, struct ds_hm_entry entry);
 
 /**
  * Retrieves the entry from the hash map based on the key. If no entry exists,
@@ -321,7 +347,7 @@ void hm__put(struct hm_hash_map *hm, struct hm_entry entry);
  * @param       key     the key for the value
  * @returns             the entry in the hash map
  */
-struct hm_entry hm__get(struct hm_hash_map *hm, const char *key);
+struct ds_hm_entry hm__get(struct ds_hash_map *hm, const char *key);
 
 /**
  * Deletes an entry from the hash map. The user needs to manually free data, if
@@ -330,5 +356,5 @@ struct hm_entry hm__get(struct hm_hash_map *hm, const char *key);
  * @param       hm      the hash map
  * @param       key     the key of the entry to delete
  */
-void hm__delete(struct hm_hash_map *hm, const char *key);
+void hm__delete(struct ds_hash_map *hm, const char *key);
 #endif

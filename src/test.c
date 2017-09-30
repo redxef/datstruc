@@ -2,8 +2,8 @@
  * @author      redxef
  * @file        test.c
  * @version     0.0.0-r0
- * @since       
- * 
+ * @since
+ *
  * @brief       A brief documentation about the file.
  *
  * A detailed documentation.
@@ -20,12 +20,12 @@ int test_list(void) {
         uint8_t src[3] = {'a', 'b', 'c'};
         char str[1024];
         uint8_t arr[10];
-        struct data data;
-        struct ll_linked_list ll;
+        struct ds_data data;
+        struct ds_linked_list ll;
 
         ll__new(&ll, LL_DATA_TYPE_U8);
         ll__from_u8_array(&ll, src, 3);
-        
+
         ll__sprint(str, &ll);
         assert(strcmp("{97, 98, 99}", str) == 0);
 
@@ -35,10 +35,10 @@ int test_list(void) {
         ll__next(&ll, &data);
         assert(data._uint == 'b');
 
-        ll__insert(&ll, (struct data) {{'d'}});
+        ll__insert(&ll, (struct ds_data) {{'d'}});
         ll__sprint(str, &ll);
         assert(strcmp("{97, 98, 99, 100}", str) == 0);
-        ll__insert_at(&ll, (struct data) {{'e'}}, 3);
+        ll__insert_at(&ll, (struct ds_data) {{'e'}}, 3);
         ll__sprint(str, &ll);
         assert(strcmp("{97, 98, 99, 101, 100}", str) == 0);
         ll__remove_at(&ll, 4);
@@ -54,8 +54,14 @@ int test_list(void) {
         assert(ll.length == 2);
 
         ll__to_u8_array(&ll, arr);
-        // assert(arr[0] == 'a');
-        // assert(arr[1] == 'c');
+        assert(arr[0] == 'a');
+        assert(arr[1] == 'b');
+
+        ll__get_first(&ll, &data);
+        assert(data._uint == 'a');
+
+        ll__get_last(&ll, &data);
+        assert(data._uint == 'b');
 
         ll__clear(&ll);
 
@@ -63,18 +69,18 @@ int test_list(void) {
 }
 
 int test_hash_map(void) {
-        struct hm_hash_map hm;
-        struct hm_entry ent;
+        struct ds_hash_map hm;
+        struct ds_hm_entry ent;
 
         hm__new(&hm, 3);
         hm.hash = hm__default_hash;
 
-        hm__put(&hm, (struct hm_entry) {"ABC", {{101}}});
-        hm__put(&hm, (struct hm_entry) {"B", {{102}}});
-        hm__put(&hm, (struct hm_entry) {"C", {{103}}});
-        hm__put(&hm, (struct hm_entry) {"D", {{104}}});
-        hm__put(&hm, (struct hm_entry) {"E", {{105}}});
-        hm__put(&hm, (struct hm_entry) {"F", {{106}}});
+        hm__put(&hm, (struct ds_hm_entry) {"ABC", {{101}}});
+        hm__put(&hm, (struct ds_hm_entry) {"B", {{102}}});
+        hm__put(&hm, (struct ds_hm_entry) {"C", {{103}}});
+        hm__put(&hm, (struct ds_hm_entry) {"D", {{104}}});
+        hm__put(&hm, (struct ds_hm_entry) {"E", {{105}}});
+        hm__put(&hm, (struct ds_hm_entry) {"F", {{106}}});
 
 
         ent = hm__get(&hm, "ABC");
@@ -109,6 +115,9 @@ int test_hash_map(void) {
 }
 
 int main(int argc, char **argv) {
+        (void) argc;
+        (void) argv;
+
         printf("test_list: ");
         test_list()? printf("failed\n") : printf("passed\n");
         printf("test_hash_map: ");
