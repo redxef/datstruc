@@ -1,29 +1,50 @@
+BUILDTYPE ?= debug
+TARGET ?= linux
+
+FILENAME := datstruc
+LIBNAME := lib$(FILENAME).so
+
 CC := clang
-CFLAGS := -g -Wall -Wpedantic -Wextra
+CDFLAGS := -g -Wall -Wpedantic -Wextra
+CRFLAGS := -Wall -Wpedantic -Wextra -O3
+ifeq ($(BUILDTYPE), debug)
+	CFLAGS := $(CDFLAGS)
+else
+	CFLAGS := $(CRFLAGS)
+endif
 LFLAGS := -shared $(CFLAGS)
+
+ifeq ($(TARGET), linux)
+	LIBNAME := lib$(FILENAME).so
+endif
+ifeq ($(TARGET), macOS)
+	LIBNAME := lib$(FILENAME).dylib
+endif
+ifeq ($(TARGET), Windows)
+	LIBNAME := $(FILENAME).dll
+endif
 
 SRC_D := src
 OBJ_D := obj
-OBJS  := obj/datstruc.o obj/test.o
-LIBOS := $(filter-out obj/test.o, $(OBJS))
+OBJS  := obj/$(FILENAME).o obj/test.o
+LIBOS := obj/$(FILENAME).o
 
-
-lib: libdatstruc.dylib
+lib: $(LIBNAME)
 
 clean:
 	$(RM) -r obj/
-	$(RM) libdatstruc.dylib
+	$(RM) $(LIBNAME)
 	$(RM) test
 
-$(OBJ_D)/datstruc.o: $(SRC_D)/datstruc.c $(SRC_D)/datstruc.h
+$(OBJ_D)/$(FILENAME).o: $(SRC_D)/$(FILENAME).c $(SRC_D)/$(FILENAME).h
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(OBJ_D)/test.o: $(SRC_D)/test.c $(SRC_D)/datstruc.h
+$(OBJ_D)/test.o: $(SRC_D)/test.c $(SRC_D)/$(FILENAME).h
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-libdatstruc.dylib: $(LIBOS)
+$(LIBNAME): $(LIBOS)
 	$(CC) $(LFLAGS) -o $@ $<
 
 test: $(OBJS)
