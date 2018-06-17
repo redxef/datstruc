@@ -4,7 +4,7 @@ TARGET ?= linux
 FILENAME := datstruc
 LIBNAME := lib$(FILENAME).so
 
-CC := clang
+CC ?= clang
 CDFLAGS := -g -Wall -Wpedantic -Wextra
 CRFLAGS := -Wall -Wpedantic -Wextra -O3
 ifeq ($(BUILDTYPE), debug)

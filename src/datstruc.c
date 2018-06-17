@@ -327,7 +327,7 @@ uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const void *key) {
         return hash;
 }
 
-void hm__put_(struct ds_hash_map *hm, void *key, struct ds_data value) {
+void hm__put_(struct ds_hash_map *hm, const void *key, struct ds_data value) {
         struct ds_hm_entry *ecpy;
         struct ds_data dat;
         uint64_t hash;

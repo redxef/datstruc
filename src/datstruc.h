@@ -353,10 +353,11 @@ uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const void *key);
  * both key and value.
  *
  * @param       hm      the hash map
- * @param       entry   the entry to add to the map
+ * @param       key     the key under which to save the value
+ * @param       value   the value to be saved (can be any of: int, uint, double, void *)
  */
 #define hm__put(hm, key, val)   hm__put_(hm, key, (struct ds_data) {{val}})
-void hm__put_(struct ds_hash_map *hm, void *key, struct ds_data value);
+void hm__put_(struct ds_hash_map *hm, const void *key, struct ds_data value);
 
 /**
  * Retrieves the entry from the hash map based on the key. If no entry exists,
