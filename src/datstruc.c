@@ -301,24 +301,27 @@ struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t en
         return dest;
 }
 
-uint64_t hm__default_hash_string(struct ds_hash_map *hm, const uint8_t *key) {
+uint64_t hm__default_hash_string(struct ds_hash_map *hm, const void *key) {
         uint64_t hash = 0x42;
+        const char *k = key;
+
         (void) hm;
 
-        while (*key) {
-                hash ^= *key;
+        while (*k) {
+                hash ^= *k;
                 hash *= 7;
-                key++;
+                k++;
         }
         return hash;
 }
 
-uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const uint8_t *key) {
+uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const void *key) {
         uint64_t i;
         uint64_t hash = 0x42;
+        const uint8_t *k = key;
 
         for (i = 0; i < hm->entry_size; i++) {
-                hash ^= key[i];
+                hash ^= k[i];
                 hash *= 7;
         }
         return hash;
@@ -336,8 +339,8 @@ void hm__put_(struct ds_hash_map *hm, void *key, struct ds_data value) {
         }
         ecpy->value = value;
         if (hm->entry_size <= 0) {
-                ecpy->key = calloc(1, strlen((char *) key));
-                strcpy((char *) ecpy->key, (char *) key);
+                ecpy->key = calloc(1, strlen(key));
+                strcpy(ecpy->key, key);
         } else {
                 ecpy->key = calloc(1, hm->entry_size);
                 memcpy(ecpy->key, key, hm->entry_size);
@@ -349,7 +352,7 @@ void hm__put_(struct ds_hash_map *hm, void *key, struct ds_data value) {
         ll__append(&(hm->buckets[hash]), dat);
 }
 
-struct ds_hm_entry hm__get(struct ds_hash_map *hm, const char *key) {
+struct ds_hm_entry hm__get(struct ds_hash_map *hm, const void *key) {
         uint64_t hash = hm->hash(hm, (const uint8_t *) key) % hm->size;
         struct ds_data dat;
         struct ds_hm_entry *entry;
@@ -360,7 +363,7 @@ struct ds_hm_entry hm__get(struct ds_hash_map *hm, const char *key) {
                 ll__next(&ll, &dat);
                 entry = dat._ptr;
                 if (hm->entry_size <= 0) {
-                        if (strcmp(key, (const char *) entry->key) == 0)
+                        if (strcmp(key, entry->key) == 0)
                                 return *entry;
                 } else {
                         if (memcmp(key, entry->key, hm->entry_size) == 0)
@@ -371,20 +374,20 @@ struct ds_hm_entry hm__get(struct ds_hash_map *hm, const char *key) {
         return hm->none;
 }
 
-void hm__delete(struct ds_hash_map *hm, const char *key) {
+void hm__delete(struct ds_hash_map *hm, const void *key) {
         uint64_t hash;
         struct ds_data dat;
         struct ds_hm_entry *entry;
         struct ds_linked_list ll;
 
-        hash = hm->hash(hm, (const uint8_t *) key) % hm->size;
+        hash = hm->hash(hm, key) % hm->size;
         ll = hm->buckets[hash];
         ll.flow = ll.first;
 
         while (ll__has_next(&ll)) {
                 ll__next(&ll, &dat);
                 entry = dat._ptr;
-                if (strcmp((const char *) key, (const char *) entry->key) == 0) {
+                if (strcmp(key, entry->key) == 0) {
                         ll__prev(&ll, &dat);
                         ll__prev(&ll, &dat);
                         free(entry);

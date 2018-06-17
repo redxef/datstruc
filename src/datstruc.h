@@ -80,7 +80,7 @@ struct ds_hm_entry {
 struct ds_hash_map {
         struct ds_hm_entry none;
         struct ds_linked_list *buckets;
-        uint64_t (*hash)(struct ds_hash_map *hm, const uint8_t *key);
+        uint64_t (*hash)(struct ds_hash_map *hm, const void *key);
         uint64_t size;
         uint64_t entry_size;    /* number of max bytes per entry */
 };
@@ -336,7 +336,7 @@ struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t en
  * @param       key     the key to be hashed
  * @returns             the hash value
  */
-uint64_t hm__default_hash_string(struct ds_hash_map *hm, const uint8_t *key);
+uint64_t hm__default_hash_string(struct ds_hash_map *hm, const void *key);
 
 /**
  * The default hash function of the map for binary data.
@@ -346,7 +346,7 @@ uint64_t hm__default_hash_string(struct ds_hash_map *hm, const uint8_t *key);
  * @param       key     the key to be hashed
  * @returns             the hash value
  */
-uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const uint8_t *key);
+uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const void *key);
 
 /**
  * Saves some data in the hash map using a key. The hm_entry struct contains
@@ -367,7 +367,7 @@ void hm__put_(struct ds_hash_map *hm, void *key, struct ds_data value);
  * @param       key     the key for the value
  * @returns             the entry in the hash map
  */
-struct ds_hm_entry hm__get(struct ds_hash_map *hm, const char *key);
+struct ds_hm_entry hm__get(struct ds_hash_map *hm, const void *key);
 
 /**
  * Deletes an entry from the hash map. The user needs to manually free data, if
@@ -376,5 +376,5 @@ struct ds_hm_entry hm__get(struct ds_hash_map *hm, const char *key);
  * @param       hm      the hash map
  * @param       key     the key of the entry to delete
  */
-void hm__delete(struct ds_hash_map *hm, const char *key);
+void hm__delete(struct ds_hash_map *hm, const void *key);
 #endif
