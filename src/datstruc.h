@@ -33,8 +33,8 @@
 #define LL_DATA_TYPE_U64                9
 
 
-#define HM_ENTRY_KEY_LENGTH             (32+1)
-#define HM_SIZE                         10
+#define HM_MODE_STRING                  1
+#define HM_MODE_BINARY                  2
 
 #define LL_DATA_HM_ENTRY                100
 
@@ -70,7 +70,7 @@ struct ds_linked_list {
 
 /* entry of the hash map */
 struct ds_hm_entry {
-        char key[HM_ENTRY_KEY_LENGTH];
+        uint8_t *key;
         struct ds_data value;
 };
 
@@ -78,9 +78,12 @@ struct ds_hm_entry {
  * HashMap with Strings as keys
  */
 struct ds_hash_map {
+        struct ds_hm_entry none;
         struct ds_linked_list *buckets;
-        uint64_t (*hash)(const char *key);
+        uint64_t (*hash)(struct ds_hash_map *hm, const uint8_t *key);
         uint64_t size;
+        uint64_t entry_size;    /* number of max bytes per entry */
+        uint8_t mode;
 };
 
 /* V A R I A B L E S                                                          */
@@ -313,13 +316,18 @@ void ll__sprint(char *str, struct ds_linked_list *list);
 
 /**
  * Creates a new hash map with size buckets. Collisions are resolved with a
- * linked list. This hash map only supports strings as keys.
+ * linked list. When the string mode is selected (HM_MODE_STRING), then
+ * keys can be supplied as strings without much further though.
+ * If binary mode is selected, then the key must always be a entry_size
+ * long byte array containing the data.
  *
- * @param       dest    the destination struct
- * @param       size    the target bucket count
+ * @param       dest            the destination struct
+ * @param       size            the target bucket count
+ * @param       entry_size      the number of bytes per entry
+ * @param       mode            the mode of operation for this hm
  * @returns             the pointer to the resulting hash_map struct
  */
-struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size);
+struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t entry_size, uint8_t mode);
 
 /**
  * The default hash function of the map for strings.
@@ -329,7 +337,7 @@ struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size);
  * @param       key     the key to be hashed
  * @returns             the hash value
  */
-uint64_t hm__default_hash_string(const char *key);
+uint64_t hm__default_hash_string(struct ds_hash_map *hm, const uint8_t *key);
 
 /**
  * The default hash function of the map for binary data.
@@ -339,7 +347,7 @@ uint64_t hm__default_hash_string(const char *key);
  * @param       key     the key to be hashed
  * @returns             the hash value
  */
-uint64_t hm__default_hash_binary(const char *key);
+uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const uint8_t *key);
 
 /**
  * Saves some data in the hash map using a key. The hm_entry struct contains

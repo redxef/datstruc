@@ -257,27 +257,60 @@ void ll__sprint(char *str, struct ds_linked_list *list) {
         end = strchr(end, '\0');
 }
 
-struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size) {
+struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t entry_size, uint8_t mode) {
         uint64_t i;
+        int allocated = 0;
+
         if (dest == NULL) {
+                allocated = 1;
                 dest = malloc(sizeof(struct ds_hash_map));
                 if (dest == NULL) {
                         errno = ENOMEM;
                         return NULL;
                 }
         }
+
+        dest->none.value = (struct ds_data) {{0}};
+        dest->none.key = calloc(1, entry_size);
+        if (dest->none.key == NULL) {
+                if (allocated)
+                        free(dest);
+                errno = ENOMEM;
+                return NULL;
+        }
+
         dest->buckets = malloc(size * sizeof(struct ds_linked_list));
+        if (dest->buckets == NULL) {
+                free(dest->none.key);
+                if (allocated)
+                        free(dest);
+                errno = ENOMEM;
+                return NULL;
+        }
 
         for (i = 0; i < size; i++) {
                 ll__new(&dest->buckets[i], LL_DATA_HM_ENTRY);
         }
-        dest->hash = NULL;
+
+        switch (mode) {
+                case HM_MODE_STRING:
+                        dest->hash = hm__default_hash_string;
+                        break;
+                case HM_MODE_BINARY:
+                        dest->hash = hm__default_hash_binary;
+                        break;
+                default:
+                        dest->hash = NULL;
+        }
         dest->size = size;
+        dest->entry_size = entry_size;
+        dest->mode = mode;
         return dest;
 }
 
-uint64_t hm__default_hash_string(const char *key) {
+uint64_t hm__default_hash_string(struct ds_hash_map *hm, const uint8_t *key) {
         uint64_t hash = 0x42;
+        (void) hm;
 
         while (*key) {
                 hash ^= *key;
@@ -287,11 +320,11 @@ uint64_t hm__default_hash_string(const char *key) {
         return hash;
 }
 
-uint64_t hm__default_hash_binary(const char *key) {
-        int i;
+uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const uint8_t *key) {
+        uint64_t i;
         uint64_t hash = 0x42;
 
-        for (i = 0; i < HM_ENTRY_KEY_LENGTH; i++) {
+        for (i = 0; i < hm->entry_size; i++) {
                 hash ^= key[i];
                 hash *= 7;
         }
@@ -308,17 +341,26 @@ void hm__put(struct ds_hash_map *hm, struct ds_hm_entry entry) {
                 errno = ENOMEM;
                 return;
         }
-
-        memcpy(ecpy, &entry, sizeof(struct ds_hm_entry));
+        ecpy->key = calloc(1, hm->entry_size);
+        memcpy(&ecpy->value, &entry.value, sizeof(struct ds_data));
+        switch (hm->mode) {
+                case HM_MODE_STRING:
+                        strncpy((char *) ecpy->key, (char *) entry.key, hm->entry_size-1);
+                        ecpy->key[hm->entry_size-1] = '\0';
+                        break;
+                case HM_MODE_BINARY:
+                        memcpy(ecpy->key, entry.key, hm->entry_size);
+                        break;
+        }
         dat._ptr = ecpy;
 
-        hash = hm->hash(entry.key) % hm->size;
+        hash = hm->hash(hm, entry.key) % hm->size;
 
         ll__append(&(hm->buckets[hash]), dat);
 }
 
 struct ds_hm_entry hm__get(struct ds_hash_map *hm, const char *key) {
-        uint64_t hash = hm->hash(key) % hm->size;
+        uint64_t hash = hm->hash(hm, (const uint8_t *) key) % hm->size;
         struct ds_data dat;
         struct ds_hm_entry *entry;
         struct ds_linked_list ll = hm->buckets[hash];
@@ -327,11 +369,21 @@ struct ds_hm_entry hm__get(struct ds_hash_map *hm, const char *key) {
         while (ll__has_next(&ll)) {
                 ll__next(&ll, &dat);
                 entry = dat._ptr;
-                if (strcmp(key, entry->key) == 0) {
-                        return *entry;
+                switch (hm->mode) {
+                        case HM_MODE_STRING:
+                                if (strcmp(key, (const char *) entry->key) == 0) {
+                                        return *entry;
+                                }
+                                break;
+                        case HM_MODE_BINARY:
+                                if (memcmp(key, entry->key, hm->entry_size) == 0) {
+                                        return *entry;
+                                }
+                                break;
                 }
         }
-        return (struct ds_hm_entry) {"", {{0}}};
+
+        return hm->none;
 }
 
 void hm__delete(struct ds_hash_map *hm, const char *key) {
@@ -340,14 +392,14 @@ void hm__delete(struct ds_hash_map *hm, const char *key) {
         struct ds_hm_entry *entry;
         struct ds_linked_list ll;
 
-        hash = hm->hash(key) % hm->size;
+        hash = hm->hash(hm, (const uint8_t *) key) % hm->size;
         ll = hm->buckets[hash];
         ll.flow = ll.first;
 
         while (ll__has_next(&ll)) {
                 ll__next(&ll, &dat);
                 entry = dat._ptr;
-                if (strcmp(key, entry->key) == 0) {
+                if (strcmp((const char *) key, (const char *) entry->key) == 0) {
                         ll__prev(&ll, &dat);
                         ll__prev(&ll, &dat);
                         free(entry);

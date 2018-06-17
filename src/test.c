@@ -68,13 +68,11 @@ int test_list(void) {
         return 0;
 }
 
-int test_hash_map(void) {
+int test_hash_map_string(void) {
         struct ds_hash_map hm;
         struct ds_hm_entry ent;
 
-        hm__new(&hm, 3);
-        hm.hash = hm__default_hash_string;
-
+        hm__new(&hm, 3, 4, HM_MODE_STRING);
         hm__put(&hm, (struct ds_hm_entry) {"ABC", {{101}}});
         hm__put(&hm, (struct ds_hm_entry) {"B", {{102}}});
         hm__put(&hm, (struct ds_hm_entry) {"C", {{103}}});
@@ -97,10 +95,9 @@ int test_hash_map(void) {
         assert(ent.value._uint == 106);
 
         hm__delete(&hm, "ABC");
-
         ent = hm__get(&hm, "ABC");
-
         assert(ent.value._uint == 0);
+
         ent = hm__get(&hm, "C");
         assert(ent.value._uint == 103);
         ent = hm__get(&hm, "B");
@@ -114,13 +111,59 @@ int test_hash_map(void) {
         return 0;
 }
 
+int test_hash_map_binary(void) {
+        struct ds_hash_map hm;
+        struct ds_hm_entry ent;
+        uint8_t key_buff[2] = {0, 0};
+
+        hm__new(&hm, 3, 2, HM_MODE_BINARY);
+        hm__put(&hm, (struct ds_hm_entry) {"\x00\x00", {{101}}});
+        hm__put(&hm, (struct ds_hm_entry) {"\x00\x01", {{102}}});
+        hm__put(&hm, (struct ds_hm_entry) {"\x00\x02", {{103}}});
+        hm__put(&hm, (struct ds_hm_entry) {"\x00\x03", {{104}}});
+        hm__put(&hm, (struct ds_hm_entry) {"\x00\x04", {{105}}});
+        hm__put(&hm, (struct ds_hm_entry) {"\x00\x05", {{106}}});
+
+
+        ent = hm__get(&hm, "\x00\x00");
+        assert(ent.value._uint == 101);
+        ent = hm__get(&hm, "\x00\x02");
+        assert(ent.value._uint == 103);
+        ent = hm__get(&hm, "\x00\x01");
+        assert(ent.value._uint == 102);
+        ent = hm__get(&hm, "\x00\x03");
+        assert(ent.value._uint == 104);
+        ent = hm__get(&hm, "\x00\x04");
+        assert(ent.value._uint == 105);
+        ent = hm__get(&hm, "\x00\x05");
+        assert(ent.value._uint == 106);
+
+        hm__delete(&hm, "\x00\x00");
+        ent = hm__get(&hm, "\x00\x00");
+        assert(ent.value._uint == 0);
+
+        ent = hm__get(&hm, "\x00\x02");
+        assert(ent.value._uint == 103);
+        ent = hm__get(&hm, "\x00\x01");
+        assert(ent.value._uint == 102);
+        ent = hm__get(&hm, "\x00\x03");
+        assert(ent.value._uint == 104);
+        ent = hm__get(&hm, "\x00\x04");
+        assert(ent.value._uint == 105);
+        ent = hm__get(&hm, "\x00\x05");
+        assert(ent.value._uint == 106);
+        return 0;
+}
+
 int main(int argc, char **argv) {
         (void) argc;
         (void) argv;
 
         printf("test_list: ");
         test_list()? printf("failed\n") : printf("passed\n");
-        printf("test_hash_map: ");
-        test_hash_map()? printf("failed\n") : printf("passed\n");
+        printf("test_hash_map_string: ");
+        test_hash_map_string()? printf("failed\n") : printf("passed\n");
+        printf("test_hash_map_binary: ");
+        test_hash_map_binary()? printf("failed\n") : printf("passed\n");
         return 0;
 }
