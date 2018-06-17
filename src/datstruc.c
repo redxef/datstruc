@@ -276,7 +276,18 @@ struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size) {
         return dest;
 }
 
-uint64_t hm__default_hash(const char *key) {
+uint64_t hm__default_hash_string(const char *key) {
+        uint64_t hash = 0x42;
+
+        while (*key) {
+                hash ^= *key;
+                hash *= 7;
+                key++;
+        }
+        return hash;
+}
+
+uint64_t hm__default_hash_binary(const char *key) {
         int i;
         uint64_t hash = 0x42;
 

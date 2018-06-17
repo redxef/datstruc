@@ -322,12 +322,24 @@ void ll__sprint(char *str, struct ds_linked_list *list);
 struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size);
 
 /**
- * The default hash function of the map.
+ * The default hash function of the map for strings.
+ * This function computes the hash until it encounters a zero, this is
+ * for zero terminated strings.
  *
  * @param       key     the key to be hashed
  * @returns             the hash value
  */
-uint64_t hm__default_hash(const char *key);
+uint64_t hm__default_hash_string(const char *key);
+
+/**
+ * The default hash function of the map for binary data.
+ * This function computes the hash over the while key array, it checks
+ * every item of the allocated array in hm_entry.
+ *
+ * @param       key     the key to be hashed
+ * @returns             the hash value
+ */
+uint64_t hm__default_hash_binary(const char *key);
 
 /**
  * Saves some data in the hash map using a key. The hm_entry struct contains

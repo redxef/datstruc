@@ -73,7 +73,7 @@ int test_hash_map(void) {
         struct ds_hm_entry ent;
 
         hm__new(&hm, 3);
-        hm.hash = hm__default_hash;
+        hm.hash = hm__default_hash_string;
 
         hm__put(&hm, (struct ds_hm_entry) {"ABC", {{101}}});
         hm__put(&hm, (struct ds_hm_entry) {"B", {{102}}});
