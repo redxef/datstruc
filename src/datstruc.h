@@ -9,8 +9,8 @@
  * A detailed documentation.
  */
 
-#ifndef __DATSTRUC_H_
-#define __DATSTRUC_H_
+#ifndef DATSTRUC_H
+#define DATSTRUC_H
 
 /* I N C L U D E S                                                            */
 #include <stddef.h>
