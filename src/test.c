@@ -72,13 +72,13 @@ int test_hash_map_string(void) {
         struct ds_hash_map hm;
         struct ds_hm_entry ent;
 
-        hm__new(&hm, 3, 4, HM_MODE_STRING);
-        hm__put(&hm, (struct ds_hm_entry) {"ABC", {{101}}});
-        hm__put(&hm, (struct ds_hm_entry) {"B", {{102}}});
-        hm__put(&hm, (struct ds_hm_entry) {"C", {{103}}});
-        hm__put(&hm, (struct ds_hm_entry) {"D", {{104}}});
-        hm__put(&hm, (struct ds_hm_entry) {"E", {{105}}});
-        hm__put(&hm, (struct ds_hm_entry) {"F", {{106}}});
+        hm__new(&hm, 3, 0);
+        hm__put(&hm, "ABC", 101);
+        hm__put(&hm, "B", 102);
+        hm__put(&hm, "C", 103);
+        hm__put(&hm, "D", 104);
+        hm__put(&hm, "E", 105);
+        hm__put(&hm, "F", 106);
 
 
         ent = hm__get(&hm, "ABC");
@@ -114,15 +114,14 @@ int test_hash_map_string(void) {
 int test_hash_map_binary(void) {
         struct ds_hash_map hm;
         struct ds_hm_entry ent;
-        uint8_t key_buff[2] = {0, 0};
 
-        hm__new(&hm, 3, 2, HM_MODE_BINARY);
-        hm__put(&hm, (struct ds_hm_entry) {"\x00\x00", {{101}}});
-        hm__put(&hm, (struct ds_hm_entry) {"\x00\x01", {{102}}});
-        hm__put(&hm, (struct ds_hm_entry) {"\x00\x02", {{103}}});
-        hm__put(&hm, (struct ds_hm_entry) {"\x00\x03", {{104}}});
-        hm__put(&hm, (struct ds_hm_entry) {"\x00\x04", {{105}}});
-        hm__put(&hm, (struct ds_hm_entry) {"\x00\x05", {{106}}});
+        hm__new(&hm, 3, 2);
+        hm__put(&hm, "\x00\x00", 101);
+        hm__put(&hm, "\x00\x01", 102);
+        hm__put(&hm, "\x00\x02", 103);
+        hm__put(&hm, "\x00\x03", 104);
+        hm__put(&hm, "\x00\x04", 105);
+        hm__put(&hm, "\x00\x05", 106);
 
 
         ent = hm__get(&hm, "\x00\x00");

@@ -257,7 +257,7 @@ void ll__sprint(char *str, struct ds_linked_list *list) {
         end = strchr(end, '\0');
 }
 
-struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t entry_size, uint8_t mode) {
+struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t entry_size) {
         uint64_t i;
         int allocated = 0;
 
@@ -292,19 +292,12 @@ struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t en
                 ll__new(&dest->buckets[i], LL_DATA_HM_ENTRY);
         }
 
-        switch (mode) {
-                case HM_MODE_STRING:
-                        dest->hash = hm__default_hash_string;
-                        break;
-                case HM_MODE_BINARY:
-                        dest->hash = hm__default_hash_binary;
-                        break;
-                default:
-                        dest->hash = NULL;
-        }
+        if (entry_size <= 0)
+                dest->hash = hm__default_hash_string;
+        else
+                dest->hash = hm__default_hash_binary;
         dest->size = size;
         dest->entry_size = entry_size;
-        dest->mode = mode;
         return dest;
 }
 
@@ -331,7 +324,7 @@ uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const uint8_t *key) {
         return hash;
 }
 
-void hm__put(struct ds_hash_map *hm, struct ds_hm_entry entry) {
+void hm__put_(struct ds_hash_map *hm, void *key, struct ds_data value) {
         struct ds_hm_entry *ecpy;
         struct ds_data dat;
         uint64_t hash;
@@ -341,20 +334,17 @@ void hm__put(struct ds_hash_map *hm, struct ds_hm_entry entry) {
                 errno = ENOMEM;
                 return;
         }
-        ecpy->key = calloc(1, hm->entry_size);
-        memcpy(&ecpy->value, &entry.value, sizeof(struct ds_data));
-        switch (hm->mode) {
-                case HM_MODE_STRING:
-                        strncpy((char *) ecpy->key, (char *) entry.key, hm->entry_size-1);
-                        ecpy->key[hm->entry_size-1] = '\0';
-                        break;
-                case HM_MODE_BINARY:
-                        memcpy(ecpy->key, entry.key, hm->entry_size);
-                        break;
+        ecpy->value = value;
+        if (hm->entry_size <= 0) {
+                ecpy->key = calloc(1, strlen((char *) key));
+                strcpy((char *) ecpy->key, (char *) key);
+        } else {
+                ecpy->key = calloc(1, hm->entry_size);
+                memcpy(ecpy->key, key, hm->entry_size);
         }
         dat._ptr = ecpy;
 
-        hash = hm->hash(hm, entry.key) % hm->size;
+        hash = hm->hash(hm, key) % hm->size;
 
         ll__append(&(hm->buckets[hash]), dat);
 }
@@ -369,17 +359,12 @@ struct ds_hm_entry hm__get(struct ds_hash_map *hm, const char *key) {
         while (ll__has_next(&ll)) {
                 ll__next(&ll, &dat);
                 entry = dat._ptr;
-                switch (hm->mode) {
-                        case HM_MODE_STRING:
-                                if (strcmp(key, (const char *) entry->key) == 0) {
-                                        return *entry;
-                                }
-                                break;
-                        case HM_MODE_BINARY:
-                                if (memcmp(key, entry->key, hm->entry_size) == 0) {
-                                        return *entry;
-                                }
-                                break;
+                if (hm->entry_size <= 0) {
+                        if (strcmp(key, (const char *) entry->key) == 0)
+                                return *entry;
+                } else {
+                        if (memcmp(key, entry->key, hm->entry_size) == 0)
+                                return *entry;
                 }
         }
 

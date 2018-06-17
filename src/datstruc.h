@@ -70,7 +70,7 @@ struct ds_linked_list {
 
 /* entry of the hash map */
 struct ds_hm_entry {
-        uint8_t *key;
+        void *key;
         struct ds_data value;
 };
 
@@ -83,7 +83,6 @@ struct ds_hash_map {
         uint64_t (*hash)(struct ds_hash_map *hm, const uint8_t *key);
         uint64_t size;
         uint64_t entry_size;    /* number of max bytes per entry */
-        uint8_t mode;
 };
 
 /* V A R I A B L E S                                                          */
@@ -316,18 +315,18 @@ void ll__sprint(char *str, struct ds_linked_list *list);
 
 /**
  * Creates a new hash map with size buckets. Collisions are resolved with a
- * linked list. When the string mode is selected (HM_MODE_STRING), then
+ * linked list. When the string mode is selected, then
  * keys can be supplied as strings without much further though.
  * If binary mode is selected, then the key must always be a entry_size
- * long byte array containing the data.
+ * long byte array containing the data. A entry size of <= 0 implys string
+ * mode.
  *
  * @param       dest            the destination struct
  * @param       size            the target bucket count
  * @param       entry_size      the number of bytes per entry
- * @param       mode            the mode of operation for this hm
  * @returns             the pointer to the resulting hash_map struct
  */
-struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t entry_size, uint8_t mode);
+struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t entry_size);
 
 /**
  * The default hash function of the map for strings.
@@ -356,7 +355,8 @@ uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const uint8_t *key);
  * @param       hm      the hash map
  * @param       entry   the entry to add to the map
  */
-void hm__put(struct ds_hash_map *hm, struct ds_hm_entry entry);
+#define hm__put(hm, key, val)   hm__put_(hm, key, (struct ds_data) {{val}})
+void hm__put_(struct ds_hash_map *hm, void *key, struct ds_data value);
 
 /**
  * Retrieves the entry from the hash map based on the key. If no entry exists,
