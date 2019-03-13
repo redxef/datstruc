@@ -154,17 +154,19 @@ void ll__get_last(struct ds_linked_list *list, struct ds_data *data) {
 }
 
 void ll__remove(struct ds_linked_list *list) {
-        uint8_t pos = 0;
-        if (list->flow == list->first)
-                pos = 1;
-        else if (list->flow == list->last)
-                pos = 2;
+        struct ds_node *prev = list->flow->prev;
+        struct ds_node *next = list->flow->next;
+
         lln__remove_obj(list->flow);
-        if (pos == 1)
-                list->first = list->flow->next;
-        else if (pos == 2)
-                list->last = list->flow->prev;
-        list->flow = list->flow->next;
+
+        if (prev == NULL)
+                list->first = next;
+        else if (next == NULL)
+                list->last = prev;
+        if (next == NULL)
+                list->flow = prev;
+        else
+                list->flow = next;
         list->length -= 1;
 }
 
@@ -234,7 +236,7 @@ void ll__print(struct ds_linked_list *list) {
 
         printf("{");
         while (flow->next != NULL) {
-                printf("%llu, ", flow->data._uint);
+                printf("%lu, ", flow->data._uint);
                 flow = flow->next;
         }
         printf("\b\b}");
@@ -248,7 +250,7 @@ void ll__sprint(char *str, struct ds_linked_list *list) {
         sprintf(end, "{");
         end = strchr(end, '\0');
         while (flow->next != NULL) {
-                sprintf(end, "%llu, ", flow->data._uint);
+                sprintf(end, "%lu, ", flow->data._uint);
                 end = strchr(end, '\0');
                 flow = flow->next;
         }
