@@ -27,7 +27,7 @@ struct ds_node *lln__new(void) {
         return res;
 }
 
-struct ds_data lln__remove_obj(struct ds_node *rm) {
+struct ds_data lln__remove_obj(struct ds_node *rm, int destroy_data) {
         struct ds_data ret = rm->data;
         if (rm->prev != NULL) {
                 rm->prev->next = rm->next;
@@ -35,15 +35,19 @@ struct ds_data lln__remove_obj(struct ds_node *rm) {
         if (rm->next != NULL) {
                 rm->next->prev = rm->prev;
         }
+        if (destroy_data)
+                free(rm->data._ptr);
         free(rm);
         return ret;
 }
 
-void lln__delete(struct ds_node *first) {
+void lln__delete(struct ds_node *first, int destroy_data) {
         struct ds_node *fre;
         while (first != NULL) {
                 fre = first;
                 first = first->next;
+                if (destroy_data)
+                        free(fre->data._ptr);
                 free(fre);
         }
 }
@@ -73,12 +77,16 @@ struct ds_linked_list *ll__new(struct ds_linked_list *dest, uint64_t type) {
         return dest;
 }
 
+int ll__should_delete_data(struct ds_linked_list *list) {
+         return list->type == LL_DATA_TYPE_VOID_AUTO_DELETE;
+}
+
 size_t ll__length(struct ds_linked_list *list) {
         return list->length;
 }
 
 void ll__clear(struct ds_linked_list *list) {
-        lln__delete(list->first);
+        lln__delete(list->first, ll__should_delete_data(list));
         list->first = lln__new();
         if (list->first == NULL) {
                 list->first = NULL;
@@ -93,7 +101,7 @@ void ll__clear(struct ds_linked_list *list) {
 }
 
 void ll__delete(struct ds_linked_list **list) {
-        lln__delete((*list)->first);
+        lln__delete((*list)->first, ll__should_delete_data(*list));
         free(*list);
         *list = NULL;
 }
@@ -102,7 +110,7 @@ void ll__rewind(struct ds_linked_list *list) {
         list->flow = list->first;
 }
 
-void ll__append(struct ds_linked_list *list, struct ds_data data) {
+void ll__append_(struct ds_linked_list *list, struct ds_data data) {
         list->last->data = data;
         list->last->next = lln__new();
         list->last->next->prev = list->last;
@@ -110,7 +118,7 @@ void ll__append(struct ds_linked_list *list, struct ds_data data) {
         list->length += 1;
 }
 
-void ll__insert(struct ds_linked_list *list, struct ds_data data) {
+void ll__insert_(struct ds_linked_list *list, struct ds_data data) {
         struct ds_node *nd = lln__new();
         if (nd == NULL) {
                 errno = ENOMEM;
@@ -124,7 +132,7 @@ void ll__insert(struct ds_linked_list *list, struct ds_data data) {
         list->length += 1;
 }
 
-void ll__insert_at(struct ds_linked_list *list, struct ds_data data, size_t at) {
+void ll__insert_at_(struct ds_linked_list *list, struct ds_data data, size_t at) {
         size_t i;
         struct ds_node *old_flow = list->flow;
         list->flow = list->first;
@@ -133,7 +141,7 @@ void ll__insert_at(struct ds_linked_list *list, struct ds_data data, size_t at) 
         for (i = 1; i < at; i++)
                 list->flow = list->flow->next;
 
-        ll__insert(list, data);
+        ll__insert_(list, data);
         list->flow = old_flow;
 }
 
@@ -157,7 +165,7 @@ void ll__remove(struct ds_linked_list *list) {
         struct ds_node *prev = list->flow->prev;
         struct ds_node *next = list->flow->next;
 
-        lln__remove_obj(list->flow);
+        lln__remove_obj(list->flow, ll__should_delete_data(list));
 
         if (prev == NULL)
                 list->first = next;
@@ -291,7 +299,7 @@ struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t en
         }
 
         for (i = 0; i < size; i++) {
-                ll__new(&dest->buckets[i], LL_DATA_HM_ENTRY);
+                ll__new(&dest->buckets[i], LL_DATA_TYPE_HM_ENTRY);
         }
 
         if (entry_size <= 0)
@@ -351,7 +359,7 @@ void hm__put_(struct ds_hash_map *hm, const void *key, struct ds_data value) {
 
         hash = hm->hash(hm, key) % hm->size;
 
-        ll__append(&(hm->buckets[hash]), dat);
+        ll__append_(&(hm->buckets[hash]), dat);
 }
 
 struct ds_hm_entry hm__get(struct ds_hash_map *hm, const void *key) {

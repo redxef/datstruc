@@ -35,10 +35,10 @@ int test_list(void) {
         ll__next(&ll, &data);
         assert(data._uint == 'b');
 
-        ll__insert(&ll, (struct ds_data) {{'d'}});
+        ll__insert(&ll, 'd');
         ll__sprint(str, &ll);
         assert(strcmp("{97, 98, 99, 100}", str) == 0);
-        ll__insert_at(&ll, (struct ds_data) {{'e'}}, 3);
+        ll__insert_at(&ll, 'e', 3);
         ll__sprint(str, &ll);
         assert(strcmp("{97, 98, 99, 101, 100}", str) == 0);
         ll__remove_at(&ll, 4);

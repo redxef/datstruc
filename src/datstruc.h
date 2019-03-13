@@ -21,22 +21,22 @@
 #include <errno.h>
 
 /* P R A G M A S                                                              */
-#define LL_DATA_TYPE_NONE               0
-#define LL_DATA_TYPE_VOID               1
-#define LL_DATA_TYPE_I8                 2
-#define LL_DATA_TYPE_I16                3
-#define LL_DATA_TYPE_I32                4
-#define LL_DATA_TYPE_I64                5
-#define LL_DATA_TYPE_U8                 6
-#define LL_DATA_TYPE_U16                7
-#define LL_DATA_TYPE_U32                8
-#define LL_DATA_TYPE_U64                9
+#define LL_DATA_TYPE_NONE               0x00ULL
+#define LL_DATA_TYPE_VOID               0x11ULL
+#define LL_DATA_TYPE_VOID_AUTO_DELETE   0x12ULL
+#define LL_DATA_TYPE_I8                 0x21ULL
+#define LL_DATA_TYPE_I16                0x22ULL
+#define LL_DATA_TYPE_I32                0x24ULL
+#define LL_DATA_TYPE_I64                0x28ULL
+#define LL_DATA_TYPE_U8                 0x41ULL
+#define LL_DATA_TYPE_U16                0x42ULL
+#define LL_DATA_TYPE_U32                0x44ULL
+#define LL_DATA_TYPE_U64                0x48ULL
+#define LL_DATA_TYPE_HM_ENTRY           0x81ULL
 
-
+#define HM_MODE_BINARY                  0
 #define HM_MODE_STRING                  1
-#define HM_MODE_BINARY                  2
 
-#define LL_DATA_HM_ENTRY                100
 
 /* S T R U C T S                                                              */
 
@@ -97,6 +97,7 @@ struct ds_hash_map {
  * only uninitialized data.
  *
  * @param       dest    the destination of the linked list
+ * @param       type    the type of the data this list contains
  * @returns             the pointer to the linked list struct
  */
 struct ds_linked_list *ll__new(struct ds_linked_list *dest, uint64_t type);
@@ -137,9 +138,9 @@ void ll__delete(struct ds_linked_list **list);
  *
  * @param       list    the list to use
  * @param       data    the data to be appended
- * @param       type    the type of data
  */
-void ll__append(struct ds_linked_list *list, struct ds_data data);
+#define ll__append(list, data)  ll__append_(list, (struct ds_data) {{data}})
+void ll__append_(struct ds_linked_list *list, struct ds_data data);
 
 /**
  * Inserts the specified data into the list at the current position.
@@ -150,19 +151,19 @@ void ll__append(struct ds_linked_list *list, struct ds_data data);
  *
  * @param       list    the list to operate on
  * @param       data    the data to be inserted
- * @param       type    the type of the data
  */
-void ll__insert(struct ds_linked_list *list, struct ds_data data);
+#define ll__insert(list, data)  ll__insert_(list, (struct ds_data) {{data}})
+void ll__insert_(struct ds_linked_list *list, struct ds_data data);
 
 /**
  * Inserts the specified data into the list at the specified position.
  *
  * @param       list    the list to operate on
  * @param       data    the data to insert
- * @param       type    the type of the data
  * @param       at      the position at wich to insert (index)
  */
-void ll__insert_at(struct ds_linked_list *list, struct ds_data data, size_t at);
+#define ll__insert_at(list, data, at)  ll__insert_at_(list, (struct ds_data) {{data}}, at)
+void ll__insert_at_(struct ds_linked_list *list, struct ds_data data, size_t at);
 
 /**
  * Returns the first element of this list.
@@ -184,7 +185,6 @@ void ll__get_last(struct ds_linked_list *list, struct ds_data *data);
  * Removes the currently selected list node and deletes it.
  *
  * @param       list    the list to operate on
- * @param       free    should the data be free'd
  */
 void ll__remove(struct ds_linked_list *list);
 
@@ -193,7 +193,6 @@ void ll__remove(struct ds_linked_list *list);
  *
  * @param       list    the list to operate on
  * @param       at      the index of the node to be removed
- * @param       free    should the data be free'd
  */
 void ll__remove_at(struct ds_linked_list *list, size_t at);
 
@@ -218,7 +217,6 @@ uint8_t ll__has_prev(struct ds_linked_list *list);
  *
  * @param       list    the list to operate on
  * @param       data    the destination pointer of the data
- * @param       type    the destination pointer of the type
  */
 void ll__next(struct ds_linked_list *list, struct ds_data *data);
 
@@ -227,7 +225,6 @@ void ll__next(struct ds_linked_list *list, struct ds_data *data);
  *
  * @param       list    the list to operate on
  * @param       data    the destination pointer of the data
- * @param       type    the destination pointer of the type
  */
 void ll__prev(struct ds_linked_list *list, struct ds_data *data);
 
@@ -284,7 +281,7 @@ void ll__from_##name##_array(struct ds_linked_list *list, type_ *arr,   \
         list->type = data_type_macro;                                   \
         for (i = 0; i < len; i++) {                                     \
                 dat.use_union_field = arr[i];                           \
-                ll__append(list, dat);                                  \
+                ll__append_(list, dat);                                 \
         }                                                               \
 }
 
