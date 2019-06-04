@@ -131,6 +131,13 @@ void ll__clear(struct ds_linked_list *list);
 void ll__delete(struct ds_linked_list *list);
 
 /**
+ * Rewinds the list to the beginning.
+ *
+ * @param       list    the list to rewind
+ */
+void ll__rewind(struct ds_linked_list *list);
+
+/**
  * Appends the specified data to the end of the list.
  *
  * @param       list    the list to use
