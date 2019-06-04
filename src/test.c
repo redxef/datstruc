@@ -29,16 +29,18 @@ int test_list(void) {
         ll__sprint(str, &ll);
         assert(strcmp("{97, 98, 99}", str) == 0);
 
-        ll__next(&ll, &data);
+        ll__current(&ll, &data);
         assert(data._uint == 'a');
 
         ll__next(&ll, &data);
         assert(data._uint == 'b');
 
-        ll__insert(&ll, 'd');
+        ll__next(&ll, NULL);
+
+        ll__insert_back(&ll, (struct ds_data) {{'d'}});
         ll__sprint(str, &ll);
         assert(strcmp("{97, 98, 99, 100}", str) == 0);
-        ll__insert_at(&ll, 'e', 3);
+        ll__insert_at(&ll, (struct ds_data) {{'e'}}, 3);
         ll__sprint(str, &ll);
         assert(strcmp("{97, 98, 99, 101, 100}", str) == 0);
         ll__remove_at(&ll, 4);
@@ -47,7 +49,7 @@ int test_list(void) {
         ll__remove_at(&ll, 3);
         ll__sprint(str, &ll);
         assert(strcmp("{97, 98, 99}", str) == 0);
-        ll__next(&ll, &data);
+        ll__current(&ll, &data);
         assert(data._uint == 'c');
 
         ll__remove(&ll);
@@ -64,7 +66,7 @@ int test_list(void) {
         assert(data._uint == 'b');
 
         ll__clear(&ll);
-
+        ll__delete(&ll);
         return 0;
 }
 
@@ -73,12 +75,12 @@ int test_hash_map_string(void) {
         struct ds_hm_entry ent;
 
         hm__new(&hm, 3, 0);
-        hm__put(&hm, "ABC", 101);
-        hm__put(&hm, "B", 102);
-        hm__put(&hm, "C", 103);
-        hm__put(&hm, "D", 104);
-        hm__put(&hm, "E", 105);
-        hm__put(&hm, "F", 106);
+        hm__put(&hm, "ABC", (struct ds_data) {{101}});
+        hm__put(&hm, "B", (struct ds_data) {{102}});
+        hm__put(&hm, "C", (struct ds_data) {{103}});
+        hm__put(&hm, "D", (struct ds_data) {{104}});
+        hm__put(&hm, "E", (struct ds_data) {{105}});
+        hm__put(&hm, "F", (struct ds_data) {{106}});
 
 
         ent = hm__get(&hm, "ABC");
@@ -116,12 +118,12 @@ int test_hash_map_binary(void) {
         struct ds_hm_entry ent;
 
         hm__new(&hm, 3, 2);
-        hm__put(&hm, "\x00\x00", 101);
-        hm__put(&hm, "\x00\x01", 102);
-        hm__put(&hm, "\x00\x02", 103);
-        hm__put(&hm, "\x00\x03", 104);
-        hm__put(&hm, "\x00\x04", 105);
-        hm__put(&hm, "\x00\x05", 106);
+        hm__put(&hm, "\x00\x00", (struct ds_data) {{101}});
+        hm__put(&hm, "\x00\x01", (struct ds_data) {{102}});
+        hm__put(&hm, "\x00\x02", (struct ds_data) {{103}});
+        hm__put(&hm, "\x00\x03", (struct ds_data) {{104}});
+        hm__put(&hm, "\x00\x04", (struct ds_data) {{105}});
+        hm__put(&hm, "\x00\x05", (struct ds_data) {{106}});
 
 
         ent = hm__get(&hm, "\x00\x00");

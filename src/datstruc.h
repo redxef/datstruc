@@ -58,7 +58,7 @@ struct ds_node {
 };
 
 /**
- * Doubly linked list implemented to behave as the java implementation.
+ * Doubly linked list.
  */
 struct ds_linked_list {
         struct ds_node *first;
@@ -91,16 +91,21 @@ struct ds_hash_map {
 /* F U N C T I O N   P R O T O T Y P E S                                      */
 
 /**
- * Creates a new linked list.
- * If dest is NULL, then a new linked list will be allocated on the heap,
- * otherwise the specified memory location will be used, assuming, that there is
- * only uninitialized data.
+ * Initializes a linked list.
  *
  * @param       dest    the destination of the linked list
  * @param       type    the type of the data this list contains
- * @returns             the pointer to the linked list struct
  */
-struct ds_linked_list *ll__new(struct ds_linked_list *dest, uint64_t type);
+void ll__new(struct ds_linked_list *dest, uint64_t type);
+
+/**
+ * Returns 1 if the pointer contained in every node should be freed,
+ * Otherwise 0.
+ *
+ * @param       list    the list on which to operate
+ * @returns             a boolean denoting if items should be freed.
+ */
+int ll__should_delete_data(struct ds_linked_list *list);
 
 /**
  * Returns the length of the linked list.
@@ -119,19 +124,11 @@ size_t ll__length(struct ds_linked_list *list);
 void ll__clear(struct ds_linked_list *list);
 
 /**
- * Deletes the whole linked list and sets the pointer to it to NULL.
- * If using a normal struct to hold the linked list (instead of a pointer),
- * the list must first be cleared, and then manually deallocated:
- *  1. clear the list
- *  2. free the list.first element:
- *  2.1 (optional) free the data pointer
- *  2.2 free the list.first element
- *  3. profit
+ * Deletes the linked list, does not free the struct itself.
  *
  * @param       list    the list to be deallocated
- * @param       dealloc should the items be free'd
  */
-void ll__delete(struct ds_linked_list **list);
+void ll__delete(struct ds_linked_list *list);
 
 /**
  * Appends the specified data to the end of the list.
@@ -139,31 +136,32 @@ void ll__delete(struct ds_linked_list **list);
  * @param       list    the list to use
  * @param       data    the data to be appended
  */
-#define ll__append(list, data)  ll__append_(list, (struct ds_data) {{data}})
-void ll__append_(struct ds_linked_list *list, struct ds_data data);
+void ll__append(struct ds_linked_list *list, struct ds_data data);
 
 /**
  * Inserts the specified data into the list at the current position.
  * When iterating over the list with ll__next and ll__prev, an internal pointer
  * iterates over the list, when performing operation such as ll__insert or
  * ll__remove those operations happen at this position.
- * The item specified is inserted immediatly after the current item.
+ * The item specified is inserted before or after the current item, depending
+ * on whether the function ll__insert_front or ll__insert_back has been called,
+ * respectively.
  *
  * @param       list    the list to operate on
  * @param       data    the data to be inserted
  */
-#define ll__insert(list, data)  ll__insert_(list, (struct ds_data) {{data}})
-void ll__insert_(struct ds_linked_list *list, struct ds_data data);
+void ll__insert_front(struct ds_linked_list *list, struct ds_data data);
+void ll__insert_back(struct ds_linked_list *list, struct ds_data data);
 
 /**
  * Inserts the specified data into the list at the specified position.
+ * This function behaves as ll__insert_front.
  *
  * @param       list    the list to operate on
  * @param       data    the data to insert
  * @param       at      the position at wich to insert (index)
  */
-#define ll__insert_at(list, data, at)  ll__insert_at_(list, (struct ds_data) {{data}}, at)
-void ll__insert_at_(struct ds_linked_list *list, struct ds_data data, size_t at);
+void ll__insert_at(struct ds_linked_list *list, struct ds_data data, size_t at);
 
 /**
  * Returns the first element of this list.
@@ -202,7 +200,7 @@ void ll__remove_at(struct ds_linked_list *list, size_t at);
  * @param       list    the list to operate on
  * @returns             wheter there is another item in the list or not
  */
-uint8_t ll__has_next(struct ds_linked_list *list);
+int ll__has_next(struct ds_linked_list *list);
 
 /**
  * Checks if there is another item in the list.
@@ -210,10 +208,18 @@ uint8_t ll__has_next(struct ds_linked_list *list);
  * @param       list    the list to operate on
  * @returns             wheter there is another item in the list or not
  */
-uint8_t ll__has_prev(struct ds_linked_list *list);
+int ll__has_prev(struct ds_linked_list *list);
 
 /**
- * Returns the next data from the list.
+ * Copies the currently selected data (node) to the buffer data.
+ *
+ * @param       list    the list to operate on
+ * @param       data    the destination pointer of the data
+ */
+void ll__current(struct ds_linked_list *list, struct ds_data *data);
+
+/**
+ * Advances the data pointer by one and calls ll__current.
  *
  * @param       list    the list to operate on
  * @param       data    the destination pointer of the data
@@ -221,7 +227,7 @@ uint8_t ll__has_prev(struct ds_linked_list *list);
 void ll__next(struct ds_linked_list *list, struct ds_data *data);
 
 /**
- * Returns the previous data from the list.
+ * Decreases the data pointer by one and calls ll__current.
  *
  * @param       list    the list to operate on
  * @param       data    the destination pointer of the data
@@ -245,8 +251,9 @@ void ll__to_##name##_array(struct ds_linked_list *list, type *arr) {    \
         struct ds_node *old_flow = list->flow;                          \
         list->flow = list->first;                                       \
         while (ll__has_next(list)) {                                    \
-                ll__next(list, &dat);                                   \
+                ll__current(list, &dat);                                \
                 arr[i++] = (type) dat.use_union_field;                  \
+                ll__next(list, NULL);                                   \
         }                                                               \
         list->flow = old_flow;                                          \
 }
@@ -281,7 +288,7 @@ void ll__from_##name##_array(struct ds_linked_list *list, type_ *arr,   \
         list->type = data_type_macro;                                   \
         for (i = 0; i < len; i++) {                                     \
                 dat.use_union_field = arr[i];                           \
-                ll__append_(list, dat);                                 \
+                ll__append(list, dat);                                  \
         }                                                               \
 }
 
@@ -323,7 +330,7 @@ void ll__sprint(char *str, struct ds_linked_list *list);
  * @param       entry_size      the number of bytes per entry
  * @returns             the pointer to the resulting hash_map struct
  */
-struct ds_hash_map *hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t entry_size);
+void hm__new(struct ds_hash_map *dest, uint64_t size, uint64_t entry_size);
 
 /**
  * The default hash function of the map for strings.
@@ -353,8 +360,7 @@ uint64_t hm__default_hash_binary(struct ds_hash_map *hm, const void *key);
  * @param       key     the key under which to save the value
  * @param       value   the value to be saved (can be any of: int, uint, double, void *)
  */
-#define hm__put(hm, key, val)   hm__put_(hm, key, (struct ds_data) {{val}})
-void hm__put_(struct ds_hash_map *hm, const void *key, struct ds_data value);
+void hm__put(struct ds_hash_map *hm, const void *key, struct ds_data value);
 
 /**
  * Retrieves the entry from the hash map based on the key. If no entry exists,

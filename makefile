@@ -12,7 +12,7 @@ BUILDLIB := TRUE
 LIBNAME := $(FILENAME)
 
 CFLAGS := -c -Wall -Wpedantic -Wextra
-LFLAGS := -g -lpng
+LFLAGS := -g
 ifeq ($(BUILDLIB), TRUE)
 	LIBCFLAGS := -fPIC
 	LIBLFLAGS := -shared
